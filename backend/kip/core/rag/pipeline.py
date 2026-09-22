@@ -372,7 +372,7 @@ class RagPipeline:
             titles=titles,
             candidate_limit=getattr(settings, "retrieval_candidate_limit", None),
             rerank_top_n=getattr(settings, "rerank_top_n", 6),
-            min_score=getattr(settings, "grounding_min_score", 0.16),
+            min_score=getattr(settings, "grounding_min_score", 0.02),
             min_passages=getattr(settings, "grounding_min_passages", 1),
             support_threshold=getattr(settings, "grounding_support_threshold", 0.32),
             enforce_citations=getattr(settings, "grounding_enforce_citations", True),

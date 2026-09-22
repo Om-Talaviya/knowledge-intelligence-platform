@@ -483,7 +483,7 @@ def build_settings() -> Settings:
         context_token_budget=env_int("CONTEXT_TOKEN_BUDGET", 2600),
         context_max_passages=env_int("CONTEXT_MAX_PASSAGES", 8),
         context_max_per_document=env_int("CONTEXT_MAX_PER_DOCUMENT", 4),
-        grounding_min_score=env_float("GROUNDING_MIN_SCORE", 0.16),
+        grounding_min_score=env_float("GROUNDING_MIN_SCORE", 0.02),
         grounding_min_passages=env_int("GROUNDING_MIN_PASSAGES", 1),
         grounding_support_threshold=env_float("GROUNDING_SUPPORT_THRESHOLD", 0.32),
         grounding_enforce_citations=env_bool("GROUNDING_ENFORCE_CITATIONS", True),
