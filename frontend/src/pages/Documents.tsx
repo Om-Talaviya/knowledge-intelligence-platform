@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 import {
   UploadCloud,
   FileText,
@@ -12,7 +12,6 @@ import {
   BookOpen,
   MessageSquare,
   Github,
-  FolderPlus,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import clsx from 'clsx'
@@ -72,8 +71,9 @@ export function Documents() {
       })
       setSuccess(`"${file.name}" uploaded and indexed successfully!`)
       fetchDocuments()
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to upload document')
+    } catch (err) {
+      const axiosErr = err as AxiosError<{ detail?: string }>
+      setError(axiosErr.response?.data?.detail || 'Failed to upload document')
     } finally {
       setUploading(false)
     }

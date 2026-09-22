@@ -1,11 +1,19 @@
 import React, { useState } from 'react'
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 import { Github, Folder, Loader2, CheckCircle2, AlertCircle, X } from 'lucide-react'
 
 interface IngestModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
+}
+
+interface IngestResult {
+  job_id: string
+  total_files?: number
+  processed_files?: number
+  total_chunks?: number
+  status: string
 }
 
 export function IngestModal({ isOpen, onClose, onSuccess }: IngestModalProps) {
@@ -16,7 +24,7 @@ export function IngestModal({ isOpen, onClose, onSuccess }: IngestModalProps) {
   const [folderPath, setFolderPath] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [result, setResult] = useState<any | null>(null)
+  const [result, setResult] = useState<IngestResult | null>(null)
 
   if (!isOpen) return null
 
@@ -28,15 +36,16 @@ export function IngestModal({ isOpen, onClose, onSuccess }: IngestModalProps) {
     setResult(null)
 
     try {
-      const resp = await axios.post('/api/github/ingest', {
+      const resp = await axios.post<IngestResult>('/api/github/ingest', {
         repo_url: githubUrl.trim(),
         branch: branch.trim() || 'main',
         auth_token: token.trim() || undefined,
       })
       setResult(resp.data)
       onSuccess()
-    } catch (err: any) {
-      setError(err.response?.data?.detail || err.message || 'Failed to ingest repository')
+    } catch (err) {
+      const axiosErr = err as AxiosError<{ detail?: string }>
+      setError(axiosErr.response?.data?.detail || axiosErr.message || 'Failed to ingest repository')
     } finally {
       setLoading(false)
     }
@@ -50,13 +59,14 @@ export function IngestModal({ isOpen, onClose, onSuccess }: IngestModalProps) {
     setResult(null)
 
     try {
-      const resp = await axios.post('/api/ingest/local', {
+      const resp = await axios.post<IngestResult>('/api/ingest/local', {
         folder_path: folderPath.trim(),
       })
       setResult(resp.data)
       onSuccess()
-    } catch (err: any) {
-      setError(err.response?.data?.detail || err.message || 'Failed to ingest local folder')
+    } catch (err) {
+      const axiosErr = err as AxiosError<{ detail?: string }>
+      setError(axiosErr.response?.data?.detail || axiosErr.message || 'Failed to ingest local folder')
     } finally {
       setLoading(false)
     }
