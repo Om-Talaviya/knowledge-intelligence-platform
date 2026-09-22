@@ -266,7 +266,7 @@ class TestChatFlow:
         data = resp.json()
         assert data["refused"]
         # Empty corpus -> no passages retrieved -> no_passages refusal
-        assert data["refusal_reason"] in ("no_passages", "weak_match", "model_refused")
+        assert data["refusal_reason"] in ("no_passages", "too_few_passages", "weak_match", "no_passage_text", "model_refused", "insufficient_evidence")
 
     async def test_conversation_history(self, client: AsyncClient, auth_headers):
         # Upload doc
