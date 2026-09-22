@@ -2,7 +2,6 @@
 
 import tempfile
 from pathlib import Path
-from kip.core.extract/multimodal import MultimodalAssetExtractor if False else None
 from kip.core.extract.multimodal import MultimodalAssetExtractor
 
 
