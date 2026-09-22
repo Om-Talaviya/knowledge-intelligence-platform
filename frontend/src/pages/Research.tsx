@@ -6,15 +6,10 @@ import {
   Bot,
   Layers,
   FileCode,
-  CheckCircle2,
-  Clock,
   Loader2,
   AlertCircle,
-  ExternalLink,
-  BookOpen,
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
-import clsx from 'clsx'
 
 interface ResearchGoal {
   goal_id: string
@@ -155,7 +150,7 @@ export function Research() {
           <Loader2 size={36} className="mx-auto text-[var(--color-primary)] animate-spin mb-3" />
           <h3 className="text-sm font-semibold text-slate-900">Autonomous Agent is Researching Codebase...</h3>
           <p className="text-xs text-[var(--color-text-muted)] mt-1 max-w-md mx-auto">
-            Decomposing research plan $\rightarrow$ inspecting symbols $\rightarrow$ extracting source slices $\rightarrow$ synthesizing grounded report.
+            Decomposing research plan &rarr; inspecting symbols &rarr; extracting source slices &rarr; synthesizing grounded report.
           </p>
         </div>
       )}
