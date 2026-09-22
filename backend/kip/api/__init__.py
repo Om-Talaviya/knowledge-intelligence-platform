@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from kip.api.routers import auth, chat, documents, health, ingest, settings
+from kip.api.routers import auth, chat, documents, github, health, ingest, settings
 from kip.config import get_settings
 from kip.errors import register_exception_handlers
 from kip.logging_setup import setup_logging
@@ -38,6 +38,7 @@ def create_app() -> FastAPI:
     app.include_router(chat.router)
     app.include_router(settings.router)
     app.include_router(ingest.router)
+    app.include_router(github.router)
 
     return app
 
