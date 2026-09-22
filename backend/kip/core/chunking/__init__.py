@@ -528,3 +528,6 @@ def _split_lines_to_budget(text: str, max_tokens: int) -> list[str]:
     if current:
         pieces.append("\n".join(current))
     return [piece for piece in pieces if piece.strip()]
+
+
+from kip.core.chunking.code_chunker import CodeChunker, CodeChunk
