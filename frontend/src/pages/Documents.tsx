@@ -1,37 +1,52 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
+import axios from 'axios'
+import {
+  UploadCloud,
+  FileText,
+  Trash2,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  Clock,
+  Layers,
+  BookOpen,
+  MessageSquare,
+  Github,
+  FolderPlus,
+} from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { api } from '../lib/api'
-import { FileText, Trash2, Loader2, AlertCircle, MessageSquare, X, UploadCloud, Layers, BookOpen, Clock } from 'lucide-react'
 import clsx from 'clsx'
+import { IngestModal } from '../components/IngestModal'
 
 interface Document {
   id: string
   filename: string
   title: string | null
-  page_count: number
-  chunk_count: number
-  status: string
-  created_at: string
+  mime_type: string
   size_bytes: number
-  warnings: string[]
+  status: string
+  chunk_count: number
+  page_count: number | null
+  created_at: string
 }
 
 export function Documents() {
-  const navigate = useNavigate()
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
-  const [error, setError] = useState('')
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [dragActive, setDragActive] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [isIngestModalOpen, setIsIngestModalOpen] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const navigate = useNavigate()
 
   const fetchDocuments = async () => {
     try {
-      const response = await api.get('/documents')
-      setDocuments(response.data.documents || [])
-    } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { detail?: string } } }
-      setError(axiosError.response?.data?.detail || 'Failed to load documents')
+      const response = await axios.get('/api/documents')
+      setDocuments(response.data.items || [])
+    } catch {
+      setError('Failed to load documents')
     } finally {
       setLoading(false)
     }
@@ -40,6 +55,29 @@ export function Documents() {
   useEffect(() => {
     fetchDocuments()
   }, [])
+
+  const handleFile = async (file: File) => {
+    if (!file) return
+
+    setUploading(true)
+    setError(null)
+    setSuccess(null)
+
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      await axios.post('/api/documents/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      setSuccess(`"${file.name}" uploaded and indexed successfully!`)
+      fetchDocuments()
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to upload document')
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -55,59 +93,34 @@ export function Documents() {
     e.preventDefault()
     e.stopPropagation()
     setDragActive(false)
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      setSelectedFile(e.dataTransfer.files[0])
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFile(e.dataTransfer.files[0])
     }
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0])
-    }
-  }
-
-  const handleUpload = async () => {
-    if (!selectedFile) return
-    setUploading(true)
-    setError('')
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this document and its embeddings?')) return
     try {
-      const formData = new FormData()
-      formData.append('file', selectedFile)
-      await api.post('/documents/upload', formData)
-      setSelectedFile(null)
-      await fetchDocuments()
-    } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { detail?: string } } }
-      setError(axiosError.response?.data?.detail || 'Upload failed')
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  const handleDelete = async (docId: string) => {
-    if (!confirm('Are you sure you want to delete this document? This cannot be undone.')) return
-    try {
-      await api.delete(`/documents/${docId}`)
-      await fetchDocuments()
-    } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { detail?: string } } }
-      setError(axiosError.response?.data?.detail || 'Delete failed')
+      await axios.delete(`/api/documents/${id}`)
+      setDocuments(documents.filter((d) => d.id !== id))
+    } catch {
+      setError('Failed to delete document')
     }
   }
 
   const formatSize = (bytes: number) => {
-    if (!bytes && bytes !== 0) return '0 B'
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+    if (bytes === 0) return '0 B'
+    const k = 1024
+    const sizes = ['B', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
   }
 
   const formatDate = (dateStr: string) => {
-    if (!dateStr) return '—'
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      year: 'numeric',
+    return new Date(dateStr).toLocaleDateString(undefined, {
       month: 'short',
       day: 'numeric',
+      year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     })
@@ -117,120 +130,87 @@ export function Documents() {
     const ext = filename.split('.').pop()?.toLowerCase()
     switch (ext) {
       case 'pdf':
-        return { label: 'PDF', bg: 'bg-red-50 text-red-600 border-red-200' }
+        return { label: 'PDF', bg: 'bg-red-50 text-red-700 border-red-200' }
       case 'docx':
-      case 'doc':
-        return { label: 'DOCX', bg: 'bg-blue-50 text-blue-600 border-blue-200' }
-      case 'txt':
-        return { label: 'TXT', bg: 'bg-emerald-50 text-emerald-600 border-emerald-200' }
+        return { label: 'DOCX', bg: 'bg-blue-50 text-blue-700 border-blue-200' }
       case 'md':
-        return { label: 'MD', bg: 'bg-purple-50 text-purple-600 border-purple-200' }
+        return { label: 'MD', bg: 'bg-purple-50 text-purple-700 border-purple-200' }
+      case 'py':
+      case 'ts':
+      case 'js':
+        return { label: ext.toUpperCase(), bg: 'bg-indigo-50 text-indigo-700 border-indigo-200' }
       default:
-        return { label: ext?.toUpperCase() || 'FILE', bg: 'bg-slate-50 text-slate-600 border-slate-200' }
+        return { label: ext?.toUpperCase() || 'TXT', bg: 'bg-slate-50 text-slate-700 border-slate-200' }
     }
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-[var(--color-border)]">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">Document Library</h1>
-          <p className="text-sm text-[var(--color-text-muted)] mt-1">
-            Upload, chunk, and manage documents indexed in the vector store.
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Knowledge & Codebase Assets</h1>
+          <p className="text-xs text-[var(--color-text-muted)] mt-1">
+            Manage your document collections, GitHub repositories, and codebase vector indices.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
-          <Layers size={15} className="text-indigo-600" />
-          <span>{documents.length} Indexed Document{documents.length === 1 ? '' : 's'}</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsIngestModalOpen(true)}
+            className="btn bg-slate-900 hover:bg-slate-800 text-white text-xs py-2 px-3.5 rounded-xl flex items-center gap-2 shadow-xs cursor-pointer"
+          >
+            <Github size={15} />
+            <span>Ingest Repo / Folder</span>
+          </button>
         </div>
       </div>
 
       {/* Upload Zone */}
-      <div
-        className={clsx(
-          'card p-6 border-2 border-dashed transition-all',
-          dragActive
-            ? 'border-[var(--color-primary)] bg-indigo-50/50 shadow-sm'
-            : 'border-[var(--color-border)] hover:border-slate-300'
-        )}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-      >
-        <input
-          type="file"
-          id="file-upload"
-          accept=".pdf,.docx,.txt,.md"
-          onChange={handleFileChange}
-          className="hidden"
-          disabled={uploading}
-        />
+      <div className="card p-6 bg-white shadow-card border border-[var(--color-border)]">
+        <div
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+          className={clsx(
+            'border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200',
+            dragActive
+              ? 'border-[var(--color-primary)] bg-indigo-50/40'
+              : 'border-slate-200 hover:border-indigo-300 bg-slate-50/40'
+          )}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            id="file-upload"
+            className="hidden"
+            accept=".pdf,.docx,.txt,.md"
+            onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+            disabled={uploading}
+          />
 
-        <div className="text-center max-w-lg mx-auto">
-          {selectedFile ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-xl shadow-xs">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0 border border-indigo-100">
-                    <FileText size={20} />
-                  </div>
-                  <div className="text-left min-w-0">
-                    <p className="font-semibold text-sm text-slate-900 truncate">{selectedFile.name}</p>
-                    <p className="text-xs text-[var(--color-text-muted)]">{formatSize(selectedFile.size)}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setSelectedFile(null)}
-                  className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  aria-label="Remove selected file"
-                  disabled={uploading}
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              <div className="flex items-center justify-center gap-3">
-                <button
-                  onClick={() => setSelectedFile(null)}
-                  className="btn btn-secondary text-xs"
-                  disabled={uploading}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleUpload}
-                  className="btn btn-primary text-xs font-semibold px-5"
-                  disabled={uploading}
-                >
-                  {uploading ? (
-                    <>
-                      <Loader2 className="animate-spin mr-1.5" size={16} />
-                      <span>Extracting & Chunking...</span>
-                    </>
-                  ) : (
-                    <>
-                      <UploadCloud size={16} className="mr-1.5" />
-                      <span>Upload & Ingest</span>
-                    </>
-                  )}
-                </button>
-              </div>
+          {uploading ? (
+            <div className="flex flex-col items-center justify-center py-4">
+              <Loader2 size={36} className="text-[var(--color-primary)] animate-spin mb-3" />
+              <p className="text-sm font-semibold text-slate-800">Processing & Indexing File...</p>
+              <p className="text-xs text-[var(--color-text-muted)] mt-1">Extracting text, chunking, and computing vector embeddings</p>
             </div>
           ) : (
             <>
-              <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center mx-auto mb-3">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mx-auto mb-3 text-[var(--color-primary)]">
                 <UploadCloud size={24} />
               </div>
-              <p className="text-base font-semibold text-slate-900 mb-1">
-                Drop your document here, or{' '}
-                <label htmlFor="file-upload" className="text-indigo-600 hover:underline cursor-pointer">
-                  browse
+              <h3 className="text-sm font-semibold text-slate-800 mb-1">
+                Drag and drop your document here, or{' '}
+                <label
+                  htmlFor="file-upload"
+                  className="text-[var(--color-primary)] hover:underline cursor-pointer font-medium"
+                >
+                  browse files
                 </label>
-              </p>
-              <p className="text-xs text-[var(--color-text-muted)] mb-4">
-                Supported formats: PDF, DOCX, TXT, Markdown (Max file size: 25MB)
+              </h3>
+              <p className="text-xs text-[var(--color-text-muted)] max-w-sm mx-auto mb-4">
+                Supported formats: PDF, DOCX, TXT, and Markdown (up to 50MB)
               </p>
               <div className="flex items-center justify-center gap-2">
                 <span className="badge badge-neutral text-[10px]">PDF</span>
@@ -243,8 +223,14 @@ export function Documents() {
 
           {error && (
             <div className="mt-4 flex items-start gap-2.5 p-3.5 bg-red-50 border border-red-200 text-red-700 rounded-lg text-xs text-left">
-              <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+              <AlertCircle size={16} className="shrink-0 mt-0.5" />
               <span>{error}</span>
+            </div>
+          )}
+          {success && (
+            <div className="mt-4 flex items-start gap-2.5 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg text-xs text-left">
+              <CheckCircle2 size={16} className="shrink-0 mt-0.5" />
+              <span>{success}</span>
             </div>
           )}
         </div>
@@ -263,12 +249,21 @@ export function Documents() {
           </div>
           <h3 className="text-base font-semibold text-slate-900 mb-1">No documents indexed yet</h3>
           <p className="text-xs text-[var(--color-text-muted)] max-w-sm mx-auto mb-4">
-            Upload your technical documentation, research papers, or knowledge files to enable grounded AI Q&A.
+            Upload your technical documentation or import a GitHub repo to enable grounded AI Q&A.
           </p>
-          <label htmlFor="file-upload" className="btn btn-primary text-xs cursor-pointer">
-            <UploadCloud size={15} />
-            <span>Upload Document</span>
-          </label>
+          <div className="flex items-center justify-center gap-3">
+            <label htmlFor="file-upload" className="btn btn-primary text-xs cursor-pointer">
+              <UploadCloud size={15} />
+              <span>Upload Document</span>
+            </label>
+            <button
+              onClick={() => setIsIngestModalOpen(true)}
+              className="btn btn-secondary text-xs cursor-pointer"
+            >
+              <Github size={15} />
+              <span>Ingest GitHub / Folder</span>
+            </button>
+          </div>
         </div>
       ) : (
         <div className="card overflow-hidden shadow-card border border-[var(--color-border)]">
@@ -293,7 +288,7 @@ export function Documents() {
                     <tr key={doc.id} className="hover:bg-slate-50/60 transition-colors">
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center flex-shrink-0 text-slate-600">
+                          <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 text-slate-600">
                             <FileText size={16} />
                           </div>
                           <div className="min-w-0">
@@ -385,6 +380,15 @@ export function Documents() {
           </div>
         </div>
       )}
+
+      {/* Ingestion Modal */}
+      <IngestModal
+        isOpen={isIngestModalOpen}
+        onClose={() => setIsIngestModalOpen(false)}
+        onSuccess={() => {
+          fetchDocuments()
+        }}
+      />
     </div>
   )
 }
