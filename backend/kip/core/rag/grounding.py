@@ -305,7 +305,7 @@ def is_claim(terms: Sequence[str]) -> bool:
 def check_evidence(
     retrieval: Any,
     *,
-    min_score: float = 0.02,
+    min_score: float = 0.16,
     min_passages: int = 1,
 ) -> EvidenceCheck:
     """Decide whether retrieval found enough to attempt an answer.
