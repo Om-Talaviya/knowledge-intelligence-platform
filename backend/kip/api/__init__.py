@@ -1,42 +1,67 @@
-"""FastAPI application factory and middleware configuration."""
+"""API layer: FastAPI application and routers."""
 
 from __future__ import annotations
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+import logging
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 
-from kip.api.routers import auth, chat, documents, github, health, ingest, settings
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
 from kip.config import get_settings
-from kip.errors import register_exception_handlers
-from kip.logging_setup import setup_logging
+from kip.db.session import close_db, create_tables, init_db
+from kip.errors import AppError
+
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    settings = get_settings()
+    init_db()
+    await create_tables()
+    try:
+        from kip.services.documents import DocumentService
+        doc_service = DocumentService()
+        await doc_service.sync_indexes()
+    except Exception:
+        logger.exception("Index synchronization failed during startup")
+    yield
+    await close_db()
 
 
 def create_app() -> FastAPI:
-    """Create and configure the FastAPI application."""
-    app_settings = get_settings()
-    setup_logging(app_settings.log_level)
+    settings = get_settings()
 
     app = FastAPI(
-        title="Knowledge Intelligence Platform",
+        title=settings.app_name,
         version="1.0.0",
-        description="Autonomous Multimodal Research & Knowledge Intelligence API",
+        lifespan=lifespan,
+        docs_url="/docs" if not settings.is_production else None,
+        redoc_url="/redoc" if not settings.is_production else None,
     )
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=settings.cors_origins if hasattr(settings, "cors_origins") else ["*"],
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type"],
     )
 
-    register_exception_handlers(app)
+    @app.exception_handler(AppError)
+    async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
+        return JSONResponse(status_code=exc.status_code, content=exc.to_dict())
 
-    app.include_router(health.router)
-    app.include_router(auth.router)
-    app.include_router(documents.router)
-    app.include_router(chat.router)
-    app.include_router(settings.router)
+    from kip.api.routers import auth, chat, documents, github, health, ingest, settings as settings_router
+
+    app.include_router(health.router, prefix="/api", tags=["health"])
+    app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+    app.include_router(documents.router, prefix="/api/documents", tags=["documents"])
+    app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
+    app.include_router(settings_router.router, prefix="/api/settings", tags=["settings"])
     app.include_router(ingest.router)
     app.include_router(github.router)
 
