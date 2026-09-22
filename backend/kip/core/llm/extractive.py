@@ -1,4 +1,4 @@
-﻿"""Extractive answerer -- the default ``LLM_PROVIDER``, and a real baseline.
+"""Extractive answerer -- the default ``LLM_PROVIDER``, and a real baseline.
 
 This backend does not generate text. It selects the sentences from the retrieved
 passages that best match the question, quotes them verbatim, and attaches the
@@ -43,7 +43,7 @@ from kip.core.text import (
 #: terms to be quoted. Set low enough that a partial lexical match still counts
 #: (few sentences restate a whole question), high enough that a passage which
 #: merely shares one common word is not offered as an answer.
-MIN_SENTENCE_OVERLAP = 0.30
+MIN_SENTENCE_OVERLAP = 0.15
 
 #: Two selected sentences this similar are treated as the same statement. Chunk
 #: overlap means adjacent chunks legitimately share sentences, so without this

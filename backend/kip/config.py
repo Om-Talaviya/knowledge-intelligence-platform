@@ -246,7 +246,7 @@ class Settings:
     context_token_budget: int = 2600
     context_max_passages: int = 8
     context_max_per_document: int = 4
-    grounding_min_score: float = 0.08
+    grounding_min_score: float = 0.05
     grounding_min_passages: int = 1
     grounding_support_threshold: float = 0.32
     grounding_enforce_citations: bool = True
