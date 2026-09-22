@@ -72,11 +72,11 @@ export function Chat() {
     scrollToBottom()
   }, [messages])
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!input.trim() || loading) return
+  const handleSend = async (e?: React.FormEvent, directMessage?: string) => {
+    if (e) e.preventDefault()
+    const userMessage = (directMessage ?? input).trim()
+    if (!userMessage || loading) return
 
-    const userMessage = input.trim()
     setInput('')
     setLoading(true)
 
@@ -95,7 +95,7 @@ export function Chat() {
         ...newMessages,
         {
           role: 'assistant' as const,
-          content: 'I encountered an issue generating a grounded response. Please verify that documents are indexed and try again.',
+          content: 'I encountered an issue generating a grounded response. Please verify that documents are indexed and the backend server is running.',
           refused: true,
           refusal_reason: 'error',
           explanation: axiosError.response?.data?.detail || 'Network or server error during retrieval.',
@@ -186,11 +186,8 @@ export function Chat() {
               <button
                 key={suggestion}
                 type="button"
-                onClick={() => {
-                  setInput(suggestion)
-                  inputRef.current?.focus()
-                }}
-                className="flex items-center min-h-[64px] p-4 px-5 bg-slate-50/80 hover:bg-indigo-50/60 border border-slate-200 hover:border-indigo-300 rounded-xl transition-all duration-150 text-xs sm:text-sm text-slate-700 font-medium group shadow-2xs hover:shadow-xs"
+                onClick={() => handleSend(undefined, suggestion)}
+                className="flex items-center min-h-[64px] p-4 px-5 bg-slate-50/80 hover:bg-indigo-50/60 border border-slate-200 hover:border-indigo-300 rounded-xl transition-all duration-150 text-xs sm:text-sm text-slate-700 font-medium group shadow-2xs hover:shadow-xs cursor-pointer"
               >
                 <span className="group-hover:text-indigo-600 transition-colors leading-snug">{suggestion}</span>
               </button>
