@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation, NavLink } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { Menu, X, LogOut, Settings, FileText, MessageSquare, LayoutDashboard, Shield, Activity } from 'lucide-react'
+import { Menu, X, LogOut, Settings, FileText, MessageSquare, LayoutDashboard, Shield, Activity, Bot } from 'lucide-react'
 import { useState } from 'react'
 import clsx from 'clsx'
 
@@ -11,7 +11,8 @@ export function Layout() {
 
   const navItems = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/documents', label: 'Documents', icon: FileText },
+    { path: '/documents', label: 'Documents & Repos', icon: FileText },
+    { path: '/research', label: 'Deep Research Agent', icon: Bot },
     { path: '/chat', label: 'Chat & Citations', icon: MessageSquare },
     { path: '/settings', label: 'Settings', icon: Settings },
   ]
@@ -86,7 +87,7 @@ export function Layout() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="status-dot status-dot-pulse bg-emerald-500" />
-              <span className="text-xs font-medium text-slate-700">RAG Engine</span>
+              <span className="text-xs font-medium text-slate-700">Research Agent</span>
             </div>
             <span className="badge badge-success text-[10px] py-0.5">Online</span>
           </div>

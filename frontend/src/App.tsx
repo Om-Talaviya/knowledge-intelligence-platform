@@ -5,6 +5,7 @@ import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { Dashboard } from './pages/Dashboard'
 import { Documents } from './pages/Documents'
+import { Research } from './pages/Research'
 import { Chat } from './pages/Chat'
 import { Settings } from './pages/Settings'
 import { LoadingSpinner } from './components/LoadingSpinner'
@@ -31,6 +32,7 @@ export default function App() {
       <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/documents" element={<Documents />} />
+        <Route path="/research" element={<Research />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
