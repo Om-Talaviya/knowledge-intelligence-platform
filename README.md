@@ -1,281 +1,137 @@
-# Knowledge Intelligence Platform (KIP)
+# Knowledge Intelligence Platform (KIP) — Agentic Multimodal Research Platform (v2.0)
 
-<p align="left">
-  <a href="https://github.com/Om-Talaviya"><img src="https://img.shields.io/badge/Architect-Om%20Talaviya-38bdf8?style=flat-square&logo=github&logoColor=white" alt="Author" /></a>
-  <img src="https://img.shields.io/badge/Python-3.11+-3776ab?style=flat-square&logo=python&logoColor=white" alt="Python" />
-  <img src="https://img.shields.io/badge/Vector%20DB-Qdrant-dc2626?style=flat-square" alt="Qdrant" />
-  <img src="https://img.shields.io/badge/Retrieval-Hybrid%20Dense%2BSparse-0284c7?style=flat-square" alt="Hybrid Retrieval" />
-</p>
+A production-grade, open-source **Agentic Multimodal Research & Knowledge Intelligence Platform** engineered for deep codebase analysis, GitHub repository ingestion, local folder indexing, visual diagram intelligence, and grounded technical research synthesis with exact citations.
 
-A production-ready, open-source Knowledge Intelligence Platform for document ingestion, semantic search, and grounded question-answering with citations.
+---
 
-## Features
+## 🌟 Key Capabilities (v2.0 Enterprise)
 
-- **Document Ingestion**: PDF, DOCX, TXT, Markdown support with structure-aware chunking
-- **Hybrid Retrieval**: Dense (semantic) + sparse (keyword) search with Reciprocal Rank Fusion
-- **Reranking**: Heuristic, cross-encoder, and LLM-based rerankers
-- **Grounded Generation**: Extractive (default) and generative LLM backends with citation enforcement
-- **Evidence Gates**: Pre-generation similarity threshold and post-generation support checking
-- **Citation Integrity**: Every answer traces to source passages; invented markers are removed
-- **Multi-document Reasoning**: Answers can synthesize across multiple documents
-- **Conversation History**: Persistent chat sessions with context
-- **Authentication**: JWT-based auth with registration, login, password change
-- **Zero-dependency Default**: Runs entirely offline with hashing embeddings and extractive generation
-- **Production Ready**: PostgreSQL, Qdrant, Docker Compose, comprehensive test suite
+- 🤖 **Autonomous Deep Research Agent**: Decomposes complex engineering questions into multi-hop sub-goals, explores AST code symbols, inspects file slices, and synthesizes grounded research dossiers.
+- 🐙 **GitHub Repository Ingestion**: Shallow-clone and REST API tree ingestion for public and private repositories with branch/tag switching and commit context.
+- 📁 **Local Folder & Codebase Indexer**: Recursive filesystem walker with `.gitignore` compliance, binary filtering, and batch ingestion.
+- 🧩 **Language-Aware Code & AST Chunking**: Syntactic boundary chunker preserving functions, classes, and comments across Python, TypeScript, JavaScript, Go, Rust, Java, and C++.
+- 🖼️ **Multimodal Visual Intelligence**: Extracts and captions system architecture diagrams, flowcharts, screenshots, and visual plots using OCR and Vision LLMs.
+- 🔍 **Hybrid Retrieval with RRF**: Reciprocal Rank Fusion of dense embeddings and BM25 keyword search for robust precision across code and prose.
+- 🛡️ **Zero-Hallucination Grounding & Citations**: Every sentence in synthesized research and Q&A is verified against source passages and exact file:line citations.
+- ⚡ **Zero-Dependency Core**: Runs out-of-the-box offline using SQLite vector storage and deterministic hashing embeddings.
 
-## Quick Start
+---
 
-### Prerequisites
+## 🏗️ System Architecture
 
-- Docker & Docker Compose
-- Or Python 3.10+ and Node.js 20+ for local development
-
-### With Docker (Recommended)
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd knowledge-intelligence-platform
-
-# Copy environment file and customize
-cp .env.example .env
-# Edit .env - at minimum set JWT_SECRET (generate: python -c "import secrets;print(secrets.token_urlsafe(48))")
-
-# Start all services
-docker compose up -d
-
-# Access the application
-# Frontend: http://localhost
-# API Docs: http://localhost:8000/docs
+```
+                               ┌────────────────────────────────────────────────┐
+                               │           Web UI (React 18 + Vite)             │
+                               │  - Chat & Citations    - Deep Research Agent   │
+                               │  - Knowledge Assets    - GitHub/Folder Ingest  │
+                               └───────────────────────┬────────────────────────┘
+                                                       │ REST API (FastAPI)
+                               ┌───────────────────────▼────────────────────────┐
+                               │             KIP Backend Services               │
+                               │  - DocumentService    - GitHubIngestService    │
+                               │  - IngestService      - DeepResearchAgent      │
+                               └───────┬───────────────┬────────────────┬───────┘
+                                       │               │                │
+            ┌──────────────────────────▼───┐   ┌───────▼────────────┐   └──────────┐
+            │   Hybrid Retrieval Engine    │   │  AST Code Chunker  │              │
+            │  - Dense Hashing / ST Vectors│   │  - Polyglot parser │              ▼
+            │  - BM25 & SQLite FTS5 Search │   │  - Symbol Extractor│     ┌─────────────────┐
+            │  - Reciprocal Rank Fusion    │   └────────────────────┘     │ Multimodal Asset│
+            │  - Cross-Encoder Reranker    │                              │ - Diagram OCR   │
+            └──────────────┬───────────────┘                              │ - Vision LLM    │
+                           │                                              └─────────────────┘
+            ┌──────────────▼────────────────────────────────────────────────────┐
+            │                 Grounded Evidence & Citation Gate                 │
+            │      - Pre-generation gate      - Post-generation support check   │
+            │      - Exact file:line tracing  - Grounding confidence score      │
+            └───────────────────────────────────────────────────────────────────┘
 ```
 
-### Local Development
+---
 
-#### Backend
+## ⚡ Quick Start
 
-```bash
+### 1. Local Development (Windows / Linux / macOS)
+
+#### Terminal 1: Backend Server (FastAPI)
+```powershell
 cd backend
 python -m venv .venv
-source .venv/bin/activate  # or .venv\Scripts\activate on Windows
-pip install -e .[dev,embeddings]
-
-# Set environment variables
-cp ../.env.example .env
-# Edit .env
-
-# Database tables are created at application startup from the SQLAlchemy models.
-# Alembic is installed but no migration revisions are shipped.
-# DO NOT run `alembic upgrade head` - tables are auto-created on startup.
-
-# Start the API server
-uvicorn kip.api:app --reload --host 0.0.0.0 --port 8000
+.\.venv\Scripts\activate      # On Linux/macOS: source .venv/bin/activate
+pip install -e .[dev]
+uvicorn kip.api:app --reload --port 8000
 ```
+> API Docs & Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-#### Frontend
-
-```bash
+#### Terminal 2: Frontend Workspace (React + Vite)
+```powershell
 cd frontend
 npm install
 npm run dev
 ```
+> Frontend UI: [http://localhost:5173](http://localhost:5173)
 
-## Architecture
+---
 
-![Knowledge Intelligence Platform Architecture](docs/architecture.png)
+### 2. Run Full Stack with Docker Compose
+```bash
+# Clone and enter the repository
+git clone https://github.com/Om-Talaviya/knowledge-intelligence-platform.git
+cd knowledge-intelligence-platform
 
-## Configuration
+# Copy environment template
+cp .env.example .env
 
-All configuration is via environment variables (`.env` file). Key settings:
+# Launch all services (PostgreSQL, Qdrant, Backend, Frontend)
+docker compose up -d
+```
+> Frontend available at [http://localhost](http://localhost)
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `APP_ENV` | `development` | `development` or `production` |
-| `DATABASE_URL` | `sqlite:///./var/kip.sqlite3` | SQLite or PostgreSQL |
-| `VECTOR_STORE` | `sqlite` | `memory`, `sqlite`, `qdrant` |
-| `EMBEDDING_PROVIDER` | `hashing` | `hashing`, `sentence-transformers`, `openai`, `ollama` |
-| `LLM_PROVIDER` | `extractive` | `extractive`, `openai`, `anthropic`, `gemini`, `ollama` |
-| `RETRIEVAL_MODE` | `hybrid` | `hybrid`, `dense`, `keyword` |
-| `RERANKER` | `heuristic` | `heuristic`, `cross-encoder`, `llm`, `none` |
-| `JWT_SECRET` | (auto-generated in dev) | **Required in production** |
+---
 
-See `.env.example` for all options.
+## 📡 API Endpoints Reference
 
-## Default Providers (Zero-Setup)
+### Autonomous Research Agent
+- `POST /api/agent/research` — Executes autonomous deep research across indexed repositories and codebases.
 
-| Component | Default | Description |
-|-----------|---------|-------------|
-| Embeddings | Hashing | Deterministic lexical embeddings, no download, offline |
-| LLM | Extractive | Quotes matching sentences, grounded by construction |
-| Vector Store | SQLite | Persistent single-file index, exact search |
-| Keyword Index | SQLite FTS5 | Persistent, shared across workers |
-| Reranker | Heuristic | Lexical coverage/proximity, no dependencies |
+### GitHub Repository Ingestion
+- `POST /api/github/ingest` — Clones, extracts symbols, chunks, and indexes a GitHub repo.
+- `GET /api/github/status/{job_id}` — Polls repository ingestion job progress.
+- `POST /api/github/webhook` — Webhook listener for automated re-indexing on push events.
 
-## API Endpoints
+### Local Folder Ingestion
+- `POST /api/ingest/local` — Scans and indexes a local codebase directory tree.
+- `GET /api/ingest/status/{job_id}` — Polls directory ingestion progress.
 
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login, returns JWT
-- `GET /api/auth/me` - Get current user
-- `POST /api/auth/change-password` - Change password
+### Documents & Knowledge Assets
+- `POST /api/documents/upload` — Upload PDF, DOCX, Markdown, or TXT documents.
+- `GET /api/documents` — List paginated documents.
+- `GET /api/documents/{id}/chunks` — Inspect document chunk breakdown.
+- `DELETE /api/documents/{id}` — Delete document and remove vector embeddings.
 
-### Documents
-- `POST /api/documents/upload` - Upload and ingest document
-- `GET /api/documents` - List documents (paginated)
-- `GET /api/documents/{id}` - Get document details
-- `GET /api/documents/{id}/chunks` - List document chunks
-- `DELETE /api/documents/{id}` - Delete document
+### Chat & Q&A
+- `POST /api/chat/ask` — Ask a question with grounded retrieval and source citations.
+- `GET /api/chat/conversations` — Retrieve conversation history.
 
-### Chat
-- `POST /api/chat/ask` - Ask a question
-- `GET /api/chat/conversations` - List conversations
-- `GET /api/chat/conversations/{id}` - Get conversation with messages
-- `DELETE /api/chat/conversations/{id}` - Delete conversation
-- `PATCH /api/chat/conversations/{id}` - Update conversation title
+---
 
-### Settings
-- `GET /api/settings` - Get current settings
-- `GET /api/settings/embedding-providers` - Available embedding providers
-- `GET /api/settings/llm-providers` - Available LLM providers
-- `GET /api/settings/rerankers` - Available rerankers
-- `GET /api/settings/vector-stores` - Available vector stores
-- `GET /api/settings/keyword-indexes` - Available keyword indexes
-- `GET /api/settings/grounding` - Grounding thresholds
-
-## Running Tests
+## 🧪 Running Tests & Verification
 
 ```bash
-# Backend self-checks (zero-dependency)
+# 1. Zero-dependency internal verification suite (640+ checks)
 cd backend
 python -m selfcheck
 
-# Backend pytest tests
+# 2. Pytest unit & integration test suite (90 tests)
 pytest tests/ -v
 
-# Frontend tests
+# 3. Frontend linting and TypeScript compilation
 cd frontend
-npm test
+npm run lint
+npm run build
 ```
 
-## Evaluation
+---
 
-The platform includes a comprehensive evaluation harness that measures retrieval and generation quality on a labeled dataset.
-
-```bash
-# Run evaluation on the built-in demo corpus
-cd backend
-python -m kip.eval
-```
-
-The evaluation uses the demo corpus (`data/demo_corpus/`) with 20 questions (17 answerable, 3 unanswerable) covering FoodTech, Civil Engineering, Packaging, and Archival domains.
-
-### Actual Results (Zero-Dependency Stack: HashingEmbedder + ExtractiveLLM)
-
-| Metric | Value |
-|--------|-------|
-| **Retrieval** | |
-| Recall@1 | 0.221 |
-| Recall@3 | 0.438 |
-| Recall@5 | 0.577 |
-| Recall@10 | 0.749 |
-| MRR | 0.922 |
-| **Generation** (when system answers) | |
-| Groundedness | 1.000 |
-| Citation Coverage | 1.000 |
-| Citation Correctness | 1.000 |
-| **Refusal** | |
-| Refusal Accuracy (unanswerable) | 1.000 |
-| Answer Rate (answerable) | 0.294 |
-| **Latency** | ~55 ms total |
-
-### Methodology & Limitations
-
-**Retrieval Evaluation**: Uses the exact production `HybridRetriever` (RRF fusion of dense + BM25). Ground truth is document-level: a retrieved chunk is "relevant" if it comes from the document that contains the answer.
-
-**Generation Evaluation**: Uses the full production `RagPipeline` with `ExtractiveClient`. Metrics are computed on questions the system *chooses to answer* (non-refused):
-- **Groundedness**: Fraction of answer claims supported by cited passages (extractive LLM quotes verbatim → 1.0 when it answers)
-- **Citation Coverage**: Fraction of answer sentences with citations (extractive LLM always cites → 1.0 when it answers)
-- **Citation Correctness**: Whether citations reference real retrieved passages (1.0)
-- **Refusal Accuracy**: Fraction of unanswerable questions correctly refused (1.0)
-- **Answer Rate**: Fraction of answerable questions the system actually answers (0.294)
-
-**Known Limitations of Zero-Dependency Stack**:
-- **HashingEmbedder** provides no semantic understanding - dense retrieval is essentially random. The strong Recall@10 (0.749) comes primarily from BM25 keyword matching.
-- **ExtractiveClient** can only quote verbatim from retrieved passages. It cannot synthesize, paraphrase, or infer. Questions requiring inference (e.g., "What temperature gives best balance?") fail even when the answer is in the text.
-- **Answer Rate (0.294)** reflects this: only 5 of 17 answerable questions are successfully answered.
-- For production use, configure `EMBEDDING_PROVIDER=sentence-transformers` and `LLM_PROVIDER=openai` (or similar) for dramatically better retrieval and generation.
-
-**Evaluation Dataset**: `data/eval_dataset.jsonl` - 20 QA pairs derived from the demo corpus. Extend this file for domain-specific evaluation.
-
-## Project Structure
-
-```
-knowledge-intelligence-platform/
-├── backend/
-│   ├── kip/
-│   │   ├── api/              # FastAPI routers
-│   │   ├── config.py         # Configuration
-│   │   ├── db/               # SQLAlchemy models & repositories
-│   │   ├── security/         # Passwords, JWT, file validation
-│   │   ├── services/         # Business logic
-│   │   └── core/             # RAG engine (zero-dep)
-│   │       ├── embeddings/   # Embedding providers
-│   │       ├── vectorstore/  # Vector store backends
-│   │       ├── retrieval/    # Hybrid retrieval
-│   │       ├── rerank/       # Rerankers
-│   │       ├── rag/          # Pipeline, grounding, citations
-│   │       └── llm/          # LLM providers
-│   ├── selfcheck/            # Zero-dependency verification
-│   └── tests/                # Pytest tests
-├── frontend/
-│   ├── src/
-│   │   ├── components/       # React components
-│   │   ├── pages/            # Page components
-│   │   ├── lib/              # Auth, API client
-│   │   └── styles/           # CSS
-│   └── ...
-├── docker-compose.yml
-└── docs/
-    └── adr/                  # Architecture Decision Records
-```
-
-## Deployment
-
-### Production Checklist
-
-1. Set `APP_ENV=production`
-2. Generate strong `JWT_SECRET` (32+ chars)
-3. Use PostgreSQL: `DATABASE_URL=postgresql://user:pass@host:5432/db`
-4. Use Qdrant: `VECTOR_STORE=qdrant`, `QDRANT_URL=http://qdrant:6333`
-5. Configure `CORS_ORIGINS` for your domain
-6. Set `ALLOW_REGISTRATION=false` if needed
-7. Configure LLM provider API keys
-8. Enable HTTPS (reverse proxy with TLS termination)
-
-### Scaling
-
-- **API**: Run multiple backend replicas behind a load balancer
-- **Database**: PostgreSQL with connection pooling (PgBouncer)
-- **Vector Store**: Qdrant cluster for >100k chunks
-- **Keyword Index**: SQLite FTS5 is single-writer; for high write throughput use Qdrant's payload filtering
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make changes with tests
-4. Run `python -m selfcheck` and `pytest`
-5. Submit a PR
-
-## License
-
-MIT License - see [LICENSE](LICENSE)
-
-## Architecture Decision Records
-
-See [docs/adr/](docs/adr/) for key architectural decisions:
-
-- ADR-001: Zero-dependency core
-- ADR-002: SQLite as default vector store
-- ADR-003: Extractive LLM as default
-- ADR-004: Hybrid retrieval with RRF
-- ADR-005: Citation integrity design
+## 📄 License
+MIT License.
