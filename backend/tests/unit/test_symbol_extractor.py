@@ -19,11 +19,11 @@ class Point:
     extractor = SymbolExtractor()
     syms = extractor.extract_python_symbols(code, "points.py")
 
-    assert len(syms.symbols) == 2
-    assert syms.symbols[0].name == "calculate_distance"
-    assert syms.symbols[0].kind == "function"
-    assert syms.symbols[1].name == "Point"
-    assert syms.symbols[1].kind == "class"
+    assert len(syms.exported_symbols) == 2
+    assert syms.exported_symbols[0].name == "calculate_distance"
+    assert syms.exported_symbols[0].kind == "function"
+    assert syms.exported_symbols[1].name == "Point"
+    assert syms.exported_symbols[1].kind == "class"
     assert "os" in syms.imports
     assert "math" in syms.imports
 

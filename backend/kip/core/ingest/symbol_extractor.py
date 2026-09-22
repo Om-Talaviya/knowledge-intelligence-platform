@@ -13,10 +13,11 @@ from typing import Dict, List, Optional, Set
 class CodeSymbol:
     """Represents a defined function, class, type, or variable in code."""
     name: str
-    kind: str  # function, class, interface, type, constant
+    kind: str  # function, class, method, interface, type, constant
     line_number: int
     docstring: Optional[str] = None
     is_exported: bool = True
+    parent_scope: Optional[str] = None
 
 
 @dataclass
@@ -26,6 +27,10 @@ class FileSymbols:
     language: str
     symbols: List[CodeSymbol] = field(default_factory=list)
     imports: List[str] = field(default_factory=list)
+
+    @property
+    def exported_symbols(self) -> List[CodeSymbol]:
+        return [s for s in self.symbols if s.is_exported]
 
 
 @dataclass
@@ -43,7 +48,7 @@ class SymbolExtractor:
         file_syms = FileSymbols(rel_path=rel_path, language="python")
         try:
             tree = ast.parse(code)
-            for node in ast.walk(tree):
+            for node in tree.body:
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                     doc = ast.get_docstring(node)
                     file_syms.symbols.append(CodeSymbol(
@@ -62,6 +67,18 @@ class SymbolExtractor:
                         docstring=doc,
                         is_exported=not node.name.startswith("_"),
                     ))
+                    # Nested methods
+                    for sub in node.body:
+                        if isinstance(sub, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                            sub_doc = ast.get_docstring(sub)
+                            file_syms.symbols.append(CodeSymbol(
+                                name=sub.name,
+                                kind="method",
+                                line_number=sub.lineno,
+                                docstring=sub_doc,
+                                is_exported=not sub.name.startswith("_"),
+                                parent_scope=node.name,
+                            ))
                 elif isinstance(node, ast.Import):
                     for alias in node.names:
                         file_syms.imports.append(alias.name)
@@ -69,7 +86,6 @@ class SymbolExtractor:
                     mod = node.module or ""
                     file_syms.imports.append(mod)
         except Exception:
-            # Fallback regex for syntax errors or partial python code
             for match in re.finditer(r"^(?:async\s+)?def\s+([A-Za-z0-9_]+)", code, re.M):
                 line_no = code[:match.start()].count("\n") + 1
                 name = match.group(1)
@@ -88,7 +104,6 @@ class SymbolExtractor:
         """Extracts TypeScript / JavaScript symbols and imports via pattern matching."""
         file_syms = FileSymbols(rel_path=rel_path, language="typescript")
         
-        # Functions & classes
         for match in re.finditer(
             r"^(?:export\s+)?(?:async\s+)?(?:function|class|interface|type|enum)\s+([A-Za-z0-9_]+)",
             code,
@@ -112,7 +127,6 @@ class SymbolExtractor:
                 name=name, kind=kind, line_number=line_no, is_exported=is_exported
             ))
 
-        # Imports
         for match in re.finditer(r"import\s+.*?from\s+['\"]([^'\"]+)['\"]", code):
             file_syms.imports.append(match.group(1))
 
