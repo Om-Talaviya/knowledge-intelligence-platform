@@ -32,7 +32,7 @@ class VisionCaptioner:
     ) -> ImageDescription:
         """Produces a rich semantic description for a visual diagram or chart."""
         filename = Path(asset.rel_path).name.lower()
-        
+
         # Determine diagram type heuristically from name/context
         diagram_type = "diagram"
         if any(k in filename for k in ["arch", "architecture", "system", "stack"]):

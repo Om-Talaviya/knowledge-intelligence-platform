@@ -38,6 +38,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, Iterable, Sequence
+from kip.core.chunking.code_chunker import CodeChunk, CodeChunker
 
 from kip.core.extract.base import Block, BlockKind, ExtractedDocument
 from kip.core.structure import Outline, Section, build_outline, format_path
@@ -530,4 +531,4 @@ def _split_lines_to_budget(text: str, max_tokens: int) -> list[str]:
     return [piece for piece in pieces if piece.strip()]
 
 
-from kip.core.chunking.code_chunker import CodeChunker, CodeChunk
+

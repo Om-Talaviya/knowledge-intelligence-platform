@@ -6,7 +6,7 @@ from kip.core.github.cloner import GitCloner
 
 def test_parse_github_url_valid() -> None:
     cloner = GitCloner()
-    
+
     owner, repo = cloner.parse_github_url("https://github.com/openai/tiktoken")
     assert owner == "openai"
     assert repo == "tiktoken"

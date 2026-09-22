@@ -12,7 +12,7 @@ def test_github_ingest_service(mock_clone: MagicMock) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         root = Path(tmpdir)
         (root / "app.py").write_text("def start():\n    return True\n", encoding="utf-8")
-        
+
         mock_clone.return_value = ClonedRepo(
             owner="testorg",
             repo="demo-app",

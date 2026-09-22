@@ -11,7 +11,7 @@ def test_local_scanner_basic() -> None:
         (root / "main.py").write_text("print('hello')", encoding="utf-8")
         (root / "README.md").write_text("# Project\nDocumentation here.", encoding="utf-8")
         (root / ".gitignore").write_text("ignored_folder/\n*.log", encoding="utf-8")
-        
+
         sub = root / "ignored_folder"
         sub.mkdir()
         (sub / "secret.txt").write_text("secret", encoding="utf-8")

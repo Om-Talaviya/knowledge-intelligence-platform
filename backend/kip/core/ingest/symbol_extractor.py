@@ -103,7 +103,7 @@ class SymbolExtractor:
     def extract_typescript_symbols(self, code: str, rel_path: str) -> FileSymbols:
         """Extracts TypeScript / JavaScript symbols and imports via pattern matching."""
         file_syms = FileSymbols(rel_path=rel_path, language="typescript")
-        
+
         for match in re.finditer(
             r"^(?:export\s+)?(?:async\s+)?(?:function|class|interface|type|enum)\s+([A-Za-z0-9_]+)",
             code,
